@@ -17,6 +17,34 @@ class AuthController extends Controller
 
     }
 
+    public function register(Request $request){
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'phone' => 'required|unique:users,phone',
+                'password' => 'required|min:6|max:32',
+            ]);
+        if ($validator->fails()) {
+            return response()->json(["msgdefault" => $validator->errors()->first()]);
+        }
+        $user = User::create($request->all());
+        if (!empty($user)){
+            $token = JWTAuth::fromUser($user);
+            $user->token = $token;
+            unset($user->password,$user->remember_token,$user->created_at,$user->updated_at);
+
+            return response()->json([
+                'code' => 200,
+                'msgdefault'  => 'Đăng ký thành công',
+                'data'     => $user,
+            ], 200);
+        }
+        return response()->json([
+            'code' => 201,
+            'msgdefault'  => 'Đăng ký thất bại',
+        ], 201);
+    }
+
     public function login(Request $request){
         $validator = Validator::make(
             $request->all(),
